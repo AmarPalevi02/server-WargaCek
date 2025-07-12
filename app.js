@@ -1,5 +1,7 @@
+require('dotenv').config();
+const port = process.env.PORT ;
+
 const express = require("express")
-const port = 5002
 const cors = require("cors")
 const logger = require('morgan')
 

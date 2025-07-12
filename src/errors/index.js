@@ -4,6 +4,7 @@ const NotFoudn = require('./not-found')
 const Unauthenticated = require('./unauthenticated')
 const Unauthorized = require('./unauthorized')
 const Forbidden = require('./forbidden')
+const Conflict = require('./conflict')
 
 module.exports = {
    CustomAPIError,
@@ -11,5 +12,6 @@ module.exports = {
    NotFoudn,
    Unauthenticated,
    Unauthorized,
-   Forbidden
+   Forbidden,
+   Conflict
 }

@@ -1,14 +1,15 @@
 const jwt = require('jsonwebtoken');
+const { Unauthenticated } = require('../errors');
 require('dotenv').config();
 
 const authenticateUser = (req, res, next) => {
    const authHeader = req.headers['authorization'];
    const token = authHeader && authHeader.split(' ')[1];
 
-   if (!token) return res.status(401).json({ message: 'Token tidak ditemukan' });
+   if (!token) throw new Unauthenticated('Token tidak ditemukan');
 
    jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-      if (err) return res.status(403).json({ message: 'Token tidak valid' });
+      if (err) throw new Unauthenticated('Token tidak valid');
       req.user = user;
       next();
    });

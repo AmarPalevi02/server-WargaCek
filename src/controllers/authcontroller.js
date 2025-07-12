@@ -1,4 +1,4 @@
-const { login } = require("../services/authservice");
+const { login, register } = require("../services/authservice");
 
 const loginController = async (req, res) => {
    const { email, password } = req.body;
@@ -13,11 +13,31 @@ const loginController = async (req, res) => {
       });
    } catch (error) {
       res.status(401).json({
+         statu: '401',
          message: error.message || 'Login gagal',
       });
    }
 };
 
+const registerController = async (req, res) => {
+   const { username, email, password, role } = req.body
+
+   try {
+      const result = await register(username, email, password, role)
+      res.status(201).json({
+         status: "201",
+         message: 'Success register',
+         data: result
+      })
+   } catch (error) {
+      res.status(401).json({
+         statu: '401',
+         message: error.message || 'Login gagal',
+      });
+   }
+}
+
 module.exports = {
-   loginController
+   loginController,
+   registerController
 }

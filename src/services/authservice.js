@@ -1,28 +1,49 @@
-const { PrismaClient } = require('@prisma/client');
-const { generateToken } = require('../utils/jwt');
-const { comparePassword } = require('../utils/bcrypt');
+const prisma = require('../config/prisma')
 
-const prisma = new PrismaClient();
+const { generateToken } = require('../utils/jwt');
+const { comparePassword, hashedPassword } = require('../utils/bcrypt');
+const { Unauthorized, Conflict } = require('../errors');
+
 
 const login = async (email, password) => {
    const user = await prisma.user.findUnique({
-      where: { email },
+      where: { email }
    });
 
    if (!user) {
-      throw new Error('User tidak ditemukan');
+      throw new Unauthorized('Email atau Password salah')
    }
 
-   const isMatch = await comparePassword(password, user.password);
-   if (!isMatch) {
-      throw new Error('Password salah');
-   }
+   const isMatch = await comparePassword(password, user.password)
 
-   const token = generateToken({ id: user.id, username: user.username });
+   if (!isMatch) throw new Unauthorized('Email atau Password salah')
 
-   return { token, user: { id: user.id, username: user.username, role: user.role } };
+   const token = generateToken({ id: user.id, username: user.username })
+
+   return { token, user: { id: user.id, username: user.username, role: user.role } }
 };
 
+
+const register = async (username, email, password, role) => {
+   const checkEmail = await prisma.user.findUnique({ where: { email: email } })
+
+   if (checkEmail) throw new Conflict('Email sudah terdaftar, harap pakai email lain ')
+
+   const hashePassword = await hashedPassword(password)
+
+   const userRegister = await prisma.user.create({
+      data: {
+         username,
+         email,
+         password: hashePassword,
+         role
+      }
+   })
+
+   return userRegister
+}
+
 module.exports = {
-   login
+   login,
+   register
 }
