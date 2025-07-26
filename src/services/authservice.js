@@ -5,7 +5,11 @@ const { comparePassword, hashedPassword } = require('../utils/bcrypt');
 const { Unauthorized, Conflict } = require('../errors');
 
 
-const login = async (email, password) => {
+const login = async (email, password, userCaptcha, sessionCaptcha) => {
+   if (!userCaptcha || userCaptcha.toLowerCase() !== sessionCaptcha?.toLowerCase()) {
+      throw new Unauthorized('Captcha tidak valid');
+   }
+
    const user = await prisma.user.findUnique({
       where: { email }
    });
@@ -18,9 +22,9 @@ const login = async (email, password) => {
 
    if (!isMatch) throw new Unauthorized('Email atau Password salah')
 
-   const token = generateToken({ id: user.id, username: user.username })
+   const token = generateToken({ id: user.id, username: user.email })
 
-   return { token, user: { id: user.id, username: user.username, role: user.role } }
+   return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
 };
 
 
