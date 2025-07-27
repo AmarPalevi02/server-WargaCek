@@ -28,6 +28,25 @@ const login = async (email, password, userCaptcha, sessionCaptcha) => {
 };
 
 
+const loginAdminService = async (email, password) => {
+   const user = await prisma.user.findUnique({
+      where: { email }
+   });
+
+   if (!user) {
+      throw new Unauthorized('Email atau Password salah')
+   }
+
+   const isMatch = await comparePassword(password, user.password)
+
+   if (!isMatch) throw new Unauthorized('Email atau Password salah')
+
+   const token = generateToken({ id: user.id, username: user.email, role: user.role })
+
+   return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
+}
+
+
 const register = async (username, email, password, role) => {
    const checkEmail = await prisma.user.findUnique({ where: { email: email } })
 
@@ -49,5 +68,6 @@ const register = async (username, email, password, role) => {
 
 module.exports = {
    login,
-   register
+   register,
+   loginAdminService
 }

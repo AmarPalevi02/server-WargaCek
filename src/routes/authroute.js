@@ -1,5 +1,5 @@
 const express = require('express')
-const { loginController, registerController } = require('../controllers/authcontroller')
+const { loginController, registerController, loginAdminController } = require('../controllers/authcontroller')
 const svgCaptcha = require('svg-captcha');
 
 const router = express()
@@ -12,14 +12,15 @@ router.get('/captcha', (req, res) => {
       background: '#ccf2ff'
    });
 
-   req.session.captcha = captcha.text; 
+   req.session.captcha = captcha.text;
 
-   res.type('svg'); 
+   res.type('svg');
    res.status(200).send(captcha.data);
 });
 
 
 router.post('/login', loginController)
+router.post('/login/admin', loginAdminController)
 router.post('/register', registerController)
 
 module.exports = router

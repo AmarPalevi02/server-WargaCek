@@ -1,8 +1,8 @@
-const { login, register } = require("../services/authservice");
+const { login, register, loginAdminService } = require("../services/authservice");
 
 const loginController = async (req, res) => {
    const { email, password, captcha } = req.body;
-   
+
    if (!captcha || captcha.toLowerCase() !== req.session.captcha?.toLowerCase()) {
       return res.status(401).json({ message: 'Captcha tidak valid' });
    }
@@ -26,6 +26,28 @@ const loginController = async (req, res) => {
    }
 };
 
+const loginAdminController = async (req, res) => {
+   const { email, password } = req.body;
+
+   try {
+      const { token, user } = await loginAdminService(email, password);
+
+
+      res.status(200).json({
+         status: "200",
+         message: 'Login berhasil',
+         user,
+         token,
+      });
+
+   } catch (error) {
+      res.status(401).json({
+         statu: '401',
+         message: error.message || 'Login gagal',
+      });
+   }
+}
+
 const registerController = async (req, res) => {
    const { username, email, password, role } = req.body
 
@@ -46,5 +68,6 @@ const registerController = async (req, res) => {
 
 module.exports = {
    loginController,
-   registerController
+   registerController,
+   loginAdminController
 }

@@ -14,15 +14,34 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  username  String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
+  id       String @id @default(uuid())
+  username String
+  email    String @unique
+  password String
+  role     Role   @default(USER)
+
+  laporan   Laporan[]
+  createdAt DateTime  @default(now())
 }
 
 enum Role {
   ADMIN
   USER
+}
+
+model JenisKerusakan {
+  id              String    @id @default(uuid())
+  jenis_kerusakan String
+  laporan         Laporan[]
+}
+
+model Laporan {
+  id               String         @id @default(uuid())
+  jenisKerusakanId String
+  foto_url         String
+  lokasi           String
+  waktu_laporan    DateTime       @default(now())
+  userId           String
+  User             User           @relation(fields: [userId], references: [id])
+  jenisKerusakan   JenisKerusakan @relation(fields: [jenisKerusakanId], references: [id])
 }
