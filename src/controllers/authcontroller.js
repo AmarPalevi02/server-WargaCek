@@ -42,7 +42,7 @@ const loginAdminController = async (req, res) => {
 
    } catch (error) {
       res.status(401).json({
-         statu: '401',
+         status: '401',
          message: error.message || 'Login gagal',
       });
    }
@@ -60,7 +60,7 @@ const registerController = async (req, res) => {
       })
    } catch (error) {
       res.status(401).json({
-         statu: '401',
+         status: '401',
          message: error.message || 'Login gagal',
       });
    }

@@ -16,6 +16,13 @@ const createJenisKejadianService = async (namaKerusakan) => {
    })
 }
 
+const getAllJenisKejadianService = async () => {
+   const datas = await prisma.jenisKerusakan.findMany()
+
+   return datas
+}
+
 module.exports = {
-   createJenisKejadianService
+   createJenisKejadianService,
+   getAllJenisKejadianService
 }
