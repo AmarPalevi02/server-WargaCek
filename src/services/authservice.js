@@ -22,11 +22,10 @@ const login = async (email, password, userCaptcha, sessionCaptcha) => {
 
    if (!isMatch) throw new Unauthorized('Email atau Password salah')
 
-   const token = generateToken({ id: user.id, username: user.email })
+   const token = generateToken({ id: user.id, username: user.username, role: user.role })
 
    return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
 };
-
 
 const loginAdminService = async (email, password) => {
    const user = await prisma.user.findUnique({
@@ -45,6 +44,7 @@ const loginAdminService = async (email, password) => {
 
    return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
 }
+
 
 
 const register = async (username, email, password, role) => {

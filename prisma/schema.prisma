@@ -36,10 +36,22 @@ model JenisKerusakan {
 }
 
 model Laporan {
+  // id               String         @id @default(uuid())
+  // jenisKerusakanId String
+  // foto_url         String
+  // longitude        Float 
+  // latitude         Float
+  // waktu_laporan    DateTime       @default(now())
+  // userId           String
+  // User             User           @relation(fields: [userId], references: [id])
+  // jenisKerusakan   JenisKerusakan @relation(fields: [jenisKerusakanId], references: [id])
+
   id               String         @id @default(uuid())
   jenisKerusakanId String
   foto_url         String
-  lokasi           String
+  longitude        Float
+  latitude         Float
+  deskripsi        String
   waktu_laporan    DateTime       @default(now())
   userId           String
   User             User           @relation(fields: [userId], references: [id])
