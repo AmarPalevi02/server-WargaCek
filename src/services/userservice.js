@@ -28,38 +28,47 @@ const createLaporanService = async ({ tipe_kerusakan, deskripsi, longitude, lati
    }
 };
 
-
-const getLaporanService = async ({ userLat, userLng, radius = 5 }) => {
+const getLaporanService = async ({ userLat, userLng, radius = 5}) => {
    try {
       let laporan;
+
       if (userLat && userLng) {
-         // Query laporan dalam radius tertentu
+         const lat = parseFloat(userLat);
+         const lng = parseFloat(userLng);
+         const rad = parseFloat(radius);
+
+         // 1 derajat lintang ≈ 111 km
+         const latRange = rad / 111.045;
+         const lngRange = rad / (111.045 * Math.cos((Math.PI / 180) * lat));
+
          laporan = await prisma.$queryRaw`
-         SELECT 
-           l.id,
-           j.jenis_kerusakan AS tipe_kerusakan,
-           l.deskripsi,
-           l.longitude,
-           l.latitude,
-           l.foto_url,
-           l.waktu_laporan,
-           l.userId,
-           u.username,
-           (
-             6371 * acos(
-               cos(radians(${parseFloat(userLat)})) * cos(radians(l.latitude)) * 
-               cos(radians(l.longitude) - radians(${parseFloat(userLng)})) + 
-               sin(radians(${parseFloat(userLat)})) * sin(radians(l.latitude))
-             )
-           ) AS jarak
-         FROM Laporan l
-         JOIN JenisKerusakan j ON l.jenisKerusakanId = j.id
-         JOIN User u ON l.userId = u.id
-         HAVING jarak < ${parseFloat(radius)}
-         ORDER BY jarak ASC;
-       `;
+        SELECT 
+          l.id,
+          j.jenis_kerusakan AS tipe_kerusakan,
+          l.deskripsi,
+          l.longitude,
+          l.latitude,
+          l.foto_url,
+          l.waktu_laporan,
+          l.userId,
+          u.username,
+          (
+            6371 * ACOS(
+              COS(RADIANS(${lat})) * COS(RADIANS(l.latitude)) *
+              COS(RADIANS(l.longitude) - RADIANS(${lng})) +
+              SIN(RADIANS(${lat})) * SIN(RADIANS(l.latitude))
+            )
+          ) AS jarak
+        FROM Laporan l
+        JOIN JenisKerusakan j ON l.jenisKerusakanId = j.id
+        JOIN User u ON l.userId = u.id
+        WHERE l.latitude  BETWEEN (${lat} - ${latRange}) AND (${lat} + ${latRange})
+          AND l.longitude BETWEEN (${lng} - ${lngRange}) AND (${lng} + ${lngRange})
+        HAVING jarak < ${rad}
+        ORDER BY jarak ASC;
+      `;
       } else {
-         // Query semua laporan
+         // Kalau userLat & userLng tidak ada, ambil semua
          laporan = await prisma.laporan.findMany({
             include: {
                jenisKerusakan: { select: { jenis_kerusakan: true } },
@@ -67,12 +76,14 @@ const getLaporanService = async ({ userLat, userLng, radius = 5 }) => {
             },
          });
       }
+
       return laporan;
    } catch (error) {
-      console.error('Error in getLaporanService:', error.message);
-      throw new Error('Gagal mengambil laporan: ' + error.message);
+      console.error("Error in getLaporanService:", error.message);
+      throw new Error("Gagal mengambil laporan: " + error.message);
    }
 };
+
 
 
 module.exports = {
