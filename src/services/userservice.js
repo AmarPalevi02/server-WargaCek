@@ -1,6 +1,14 @@
 const prisma = require('../config/prisma')
 
-const createLaporanService = async ({ tipe_kerusakan, deskripsi, longitude, latitude, foto_url, userId }) => {
+const createLaporanService = async ({
+   tipe_kerusakan,
+   deskripsi,
+   location,
+   longitude,
+   latitude,
+   foto_url,
+   userId
+}) => {
    try {
       console.log('Received tipe_kerusakan:', tipe_kerusakan);
       const jenisKerusakan = await prisma.jenisKerusakan.findFirst({
@@ -16,6 +24,7 @@ const createLaporanService = async ({ tipe_kerusakan, deskripsi, longitude, lati
          data: {
             jenisKerusakan: { connect: { id: jenisKerusakan.id } },
             deskripsi,
+            location,
             longitude,
             latitude,
             foto_url,
@@ -28,7 +37,7 @@ const createLaporanService = async ({ tipe_kerusakan, deskripsi, longitude, lati
    }
 };
 
-const getLaporanService = async ({ userLat, userLng, radius = 5}) => {
+const getLaporanService = async ({ userLat, userLng, radius = 5 }) => {
    try {
       let laporan;
 
@@ -46,6 +55,7 @@ const getLaporanService = async ({ userLat, userLng, radius = 5}) => {
           l.id,
           j.jenis_kerusakan AS tipe_kerusakan,
           l.deskripsi,
+          l.location,
           l.longitude,
           l.latitude,
           l.foto_url,
@@ -83,7 +93,6 @@ const getLaporanService = async ({ userLat, userLng, radius = 5}) => {
       throw new Error("Gagal mengambil laporan: " + error.message);
    }
 };
-
 
 
 module.exports = {

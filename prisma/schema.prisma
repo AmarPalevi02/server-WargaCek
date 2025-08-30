@@ -42,6 +42,7 @@ model Laporan {
   longitude        Float
   latitude         Float
   deskripsi        String
+  location         String
   waktu_laporan    DateTime       @default(now())
   userId           String
   User             User           @relation(fields: [userId], references: [id])

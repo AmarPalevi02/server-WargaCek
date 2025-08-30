@@ -2,7 +2,7 @@ const { createLaporanService, getLaporanService } = require("../services/userser
 
 const createLaporanController = async (req, res) => {
    try {
-      const { tipe_kerusakan, deskripsi, longitude, latitude } = req.body;
+      const { tipe_kerusakan, deskripsi, location, longitude, latitude } = req.body;
       const userId = req.user?.id;
       const foto_url = req.file ? `/uploads/${req.file.filename}` : null;
 
@@ -13,6 +13,7 @@ const createLaporanController = async (req, res) => {
       const laporan = await createLaporanService({
          tipe_kerusakan,
          deskripsi,
+         location,
          longitude: parseFloat(longitude),
          latitude: parseFloat(latitude),
          foto_url,
