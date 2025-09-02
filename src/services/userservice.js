@@ -1,4 +1,5 @@
-const prisma = require('../config/prisma')
+const prisma = require('../config/prisma');
+const { NotFoudn } = require('../errors');
 
 const createLaporanService = async ({
    tipe_kerusakan,
@@ -33,7 +34,7 @@ const createLaporanService = async ({
       });
       return laporan;
    } catch (error) {
-      throw new Error('Gagal membuat laporan: ' + error.message);
+      throw new NotFoudn('Gagal membuat laporan: ' + error.message);
    }
 };
 
@@ -89,13 +90,37 @@ const getLaporanService = async ({ userLat, userLng, radius = 5 }) => {
 
       return laporan;
    } catch (error) {
-      console.error("Error in getLaporanService:", error.message);
-      throw new Error("Gagal mengambil laporan: " + error.message);
+      throw new NotFoudn("Gagal mengambil laporan: " + error.message);
    }
 };
 
 
+const histroyUserService = async (userId) => {
+   try {
+      const laporan = await prisma.laporan.findMany({
+         where: { userId },
+         include: {
+            jenisKerusakan: { select: { jenis_kerusakan: true } },
+            User: { select: { username: true } },
+         },
+         orderBy: {
+            waktu_laporan: 'desc',
+         },
+      });
+      return laporan;
+   } catch (error) {
+      throw new NotFoudn("Gagal mengambil laporan: " + error.message);
+   }
+}
+
+
+
+
+
+
 module.exports = {
    createLaporanService,
-   getLaporanService
+   getLaporanService,
+   histroyUserService,
+   deleteLaporanService
 }

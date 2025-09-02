@@ -1,4 +1,4 @@
-const { createLaporanService, getLaporanService } = require("../services/userservice");
+const { createLaporanService, getLaporanService, histroyUserService } = require("../services/userservice");
 
 const createLaporanController = async (req, res) => {
    try {
@@ -58,7 +58,25 @@ const getLaporanController = async (req, res) => {
 };
 
 
+const histroyUserController = async (req, res) => {
+   try {
+      const { userId } = req.params;
+      const laporan = await histroyUserService(userId);
+      res.json({
+         success: true,
+         data: laporan
+      });
+   } catch (error) {
+      res.status(500).json({
+         status: false,
+         error: error.message,
+      });
+   }
+}
+
+
 module.exports = {
    createLaporanController,
-   getLaporanController
+   getLaporanController,
+   histroyUserController
 }
