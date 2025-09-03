@@ -1,4 +1,4 @@
-const { createLaporanService, getLaporanService, histroyUserService } = require("../services/userservice");
+const { createLaporanService, getLaporanService, histroyUserService, deleteLaporanService, voteLaporanService, getLaporanWithVotesService } = require("../services/userservice");
 
 const createLaporanController = async (req, res) => {
    try {
@@ -75,8 +75,115 @@ const histroyUserController = async (req, res) => {
 }
 
 
+const deleteLaporanController = async (req, res) => {
+   try {
+      const { laporanId } = req.params;
+      const userId = req.user?.id;
+
+      if (!laporanId || !userId) {
+         return res.status(400).json({
+            status: false,
+            error: "laporanId atau userId tidak ditemukan"
+         });
+      }
+
+      const result = await deleteLaporanService(laporanId, userId);
+
+      res.status(200).json({
+         status: true,
+         message: result.message,
+      });
+   } catch (error) {
+      res.status(500).json({
+         status: false,
+         error: error.message,
+      });
+   }
+};
+
+
+const voteLaporanController = async (req, res) => {
+   try {
+      const { laporanId } = req.params;
+      const { type } = req.body;
+      const userId = req.user?.id;
+
+      if (!laporanId || !userId || !type) {
+         return res.status(400).json({ status: false, error: "Data tidak lengkap" });
+      }
+
+      const vote = await voteLaporanService(laporanId, userId, type);
+
+      res.status(200).json({
+         status: true,
+         message: "Vote berhasil",
+         data: vote
+      });
+   } catch (error) {
+      res.status(500).json({
+         status: false,
+         error: error.message
+      });
+   }
+};
+
+
+// const getLaporanWithVotesController = async (req, res) => {
+//    try {
+//       const { userLat, userLng, radius } = req.query;
+
+//       const laporan = await getLaporanWithVotesService({
+//          userLat: userLat ? parseFloat(userLat) : undefined,
+//          userLng: userLng ? parseFloat(userLng) : undefined,
+//          radius: radius ? parseFloat(radius) : 5,
+//       });
+
+//       res.status(200).json({
+//          status: true,
+//          message: "Laporan dengan vote berhasil diambil",
+//          data: laporan,
+//       });
+//    } catch (error) {
+//       res.status(500).json({
+//          status: false,
+//          error: error.message,
+//       });
+//    }
+// };
+
+
+
+const getLaporanWithVotesController = async (req, res) => {
+   try {
+      const { userLat, userLng, radius } = req.query;
+      const userId = req.user?.id || null; 
+
+      const laporan = await getLaporanWithVotesService({
+         userLat: userLat ? parseFloat(userLat) : undefined,
+         userLng: userLng ? parseFloat(userLng) : undefined,
+         radius: radius ? parseFloat(radius) : 5,
+         userId, 
+      });
+
+      res.status(200).json({
+         status: true,
+         message: "Laporan dengan vote berhasil diambil",
+         data: laporan,
+      });
+   } catch (error) {
+      res.status(500).json({
+         status: false,
+         error: error.message,
+      });
+   }
+};
+
+
 module.exports = {
    createLaporanController,
    getLaporanController,
-   histroyUserController
+   histroyUserController,
+   deleteLaporanController,
+   voteLaporanController,
+   getLaporanWithVotesController
 }
