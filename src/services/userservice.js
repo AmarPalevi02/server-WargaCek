@@ -38,7 +38,7 @@ const createLaporanService = async ({
    }
 };
 
-const getLaporanService = async ({ userLat, userLng, radius = 5 }) => {
+const getLaporanService = async ({ userLat, userLng, radius = 10 }) => {
    try {
       let laporan;
 
@@ -161,97 +161,8 @@ const voteLaporanService = async (laporanId, userId, type) => {
 };
 
 
-// // Ambil laporan dengan jumlah like & dislike
-// const getLaporanWithVotesService = async ({ userLat, userLng, radius = 5 }) => {
-//    try {
-//       let laporan;
-
-//       if (userLat && userLng) {
-//          const lat = parseFloat(userLat);
-//          const lng = parseFloat(userLng);
-//          const rad = parseFloat(radius);
-
-//          // 1 derajat lintang ≈ 111 km
-//          const latRange = rad / 111.045;
-//          const lngRange = rad / (111.045 * Math.cos((Math.PI / 180) * lat));
-
-//          laporan = await prisma.$queryRaw`
-//             SELECT 
-//                l.id,
-//                j.jenis_kerusakan AS tipe_kerusakan,
-//                l.deskripsi,
-//                l.location,
-//                l.longitude,
-//                l.latitude,
-//                l.foto_url,
-//                l.waktu_laporan,
-//                l.userId,
-//                u.username,
-//                (
-//                   6371 * ACOS(
-//                      COS(RADIANS(${lat})) * COS(RADIANS(l.latitude)) *
-//                      COS(RADIANS(l.longitude) - RADIANS(${lng})) +
-//                      SIN(RADIANS(${lat})) * SIN(RADIANS(l.latitude))
-//                   )
-//                ) AS jarak
-//             FROM Laporan l
-//             JOIN JenisKerusakan j ON l.jenisKerusakanId = j.id
-//             JOIN User u ON l.userId = u.id
-//             WHERE l.latitude  BETWEEN (${lat} - ${latRange}) AND (${lat} + ${latRange})
-//               AND l.longitude BETWEEN (${lng} - ${lngRange}) AND (${lng} + ${lngRange})
-//             HAVING jarak < ${rad}
-//             ORDER BY jarak ASC;
-//          `;
-
-//          // ambil votes per laporan
-//          const laporanIds = laporan.map(l => l.id);
-//          const votes = await prisma.vote.findMany({
-//             where: { laporanId: { in: laporanIds } },
-//          });
-
-//          // gabungkan laporan dengan like/dislike count
-//          laporan = laporan.map(l => {
-//             const voteForLaporan = votes.filter(v => v.laporanId === l.id);
-//             const likeCount = voteForLaporan.filter(v => v.type === 'LIKE').length;
-//             const dislikeCount = voteForLaporan.filter(v => v.type === 'DISLIKE').length;
-//             return { ...l, likeCount, dislikeCount };
-//          });
-
-//       } else {
-//          // kalau userLat & userLng tidak ada, ambil semua laporan + votes
-//          laporan = await prisma.laporan.findMany({
-//             include: {
-//                jenisKerusakan: { select: { jenis_kerusakan: true } },
-//                User: { select: { username: true } },
-//                votes: true,
-//             },
-//          });
-
-//          laporan = laporan.map(l => {
-//             const likeCount = l.votes.filter(v => v.type === 'LIKE').length;
-//             const dislikeCount = l.votes.filter(v => v.type === 'DISLIKE').length;
-//             return { ...l, likeCount, dislikeCount };
-//          });
-//       }
-
-//       // urutkan berdasarkan jumlah like dulu, lalu dislike, lalu terbaru
-//       laporan.sort((a, b) => {
-//          if (a.likeCount !== b.likeCount) return b.likeCount - a.likeCount;
-//          if (a.dislikeCount !== b.dislikeCount) return a.dislikeCount - b.dislikeCount;
-//          return new Date(b.waktu_laporan) - new Date(a.waktu_laporan);
-//       });
-
-//       return laporan;
-//    } catch (error) {
-//       throw new NotFoudn("Gagal mengambil laporan dengan vote: " + error.message);
-//    }
-// };
-
-
-
-
 // Ambil laporan dengan jumlah like & dislike + userVote
-const getLaporanWithVotesService = async ({ userLat, userLng, radius = 5, userId }) => {
+const getLaporanWithVotesService = async ({ userLat, userLng, radius = 10, userId }) => {
    try {
       let laporan;
 

@@ -40,7 +40,7 @@ const getLaporanController = async (req, res) => {
       const laporan = await getLaporanService({
          userLat: userLat ? parseFloat(userLat) : undefined,
          userLng: userLng ? parseFloat(userLng) : undefined,
-         radius: radius ? parseFloat(radius) : 5,
+         radius: radius ? parseFloat(radius) : 10,
       });
 
       res.status(200).json({
@@ -128,30 +128,6 @@ const voteLaporanController = async (req, res) => {
 };
 
 
-// const getLaporanWithVotesController = async (req, res) => {
-//    try {
-//       const { userLat, userLng, radius } = req.query;
-
-//       const laporan = await getLaporanWithVotesService({
-//          userLat: userLat ? parseFloat(userLat) : undefined,
-//          userLng: userLng ? parseFloat(userLng) : undefined,
-//          radius: radius ? parseFloat(radius) : 5,
-//       });
-
-//       res.status(200).json({
-//          status: true,
-//          message: "Laporan dengan vote berhasil diambil",
-//          data: laporan,
-//       });
-//    } catch (error) {
-//       res.status(500).json({
-//          status: false,
-//          error: error.message,
-//       });
-//    }
-// };
-
-
 
 const getLaporanWithVotesController = async (req, res) => {
    try {
@@ -161,7 +137,7 @@ const getLaporanWithVotesController = async (req, res) => {
       const laporan = await getLaporanWithVotesService({
          userLat: userLat ? parseFloat(userLat) : undefined,
          userLng: userLng ? parseFloat(userLng) : undefined,
-         radius: radius ? parseFloat(radius) : 5,
+         radius: radius ? parseFloat(radius) : 10,
          userId, 
       });
 
