@@ -28,6 +28,7 @@ model User {
 enum Role {
   ADMIN
   USER
+  PLN
 }
 
 enum VoteType {
@@ -59,8 +60,8 @@ model Laporan {
   id               String         @id @default(uuid())
   jenisKerusakanId String
   foto_url         String
-  longitude        Float
-  latitude         Float
+  longitude        Float?
+  latitude         Float?
   deskripsi        String
   location         String
   waktu_laporan    DateTime       @default(now())

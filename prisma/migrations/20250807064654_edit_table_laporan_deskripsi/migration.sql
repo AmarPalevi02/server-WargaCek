@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `laporan` ADD COLUMN `deskripsi` VARCHAR(191) NOT NULL;
+ALTER TABLE `Laporan` ADD COLUMN `deskripsi` VARCHAR(191) NOT NULL;

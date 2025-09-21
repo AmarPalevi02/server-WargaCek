@@ -5,4 +5,4 @@
 
 */
 -- AlterTable
-ALTER TABLE `laporan` MODIFY `deskripsi` VARCHAR(191) NOT NULL;
+ALTER TABLE `Laporan` MODIFY `deskripsi` VARCHAR(191) NOT NULL;

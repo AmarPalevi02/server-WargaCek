@@ -7,6 +7,6 @@
 
 */
 -- AlterTable
-ALTER TABLE `laporan` DROP COLUMN `lokasi`,
+ALTER TABLE `Laporan` DROP COLUMN `lokasi`,
     ADD COLUMN `latitude` DOUBLE NOT NULL,
     ADD COLUMN `longitude` DOUBLE NOT NULL;

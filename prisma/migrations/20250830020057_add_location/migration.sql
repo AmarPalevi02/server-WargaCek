@@ -5,5 +5,5 @@
 
 */
 -- AlterTable
-ALTER TABLE `laporan` ADD COLUMN `location` VARCHAR(191) NOT NULL,
+ALTER TABLE `Laporan` ADD COLUMN `location` VARCHAR(191) NOT NULL,
     MODIFY `deskripsi` VARCHAR(191) NULL;
