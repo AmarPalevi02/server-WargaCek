@@ -1,73 +1,98 @@
-const prisma = require('../config/prisma')
+const prisma = require("../config/prisma");
 
-const { generateToken } = require('../utils/jwt');
-const { comparePassword, hashedPassword } = require('../utils/bcrypt');
-const { Unauthorized, Conflict } = require('../errors');
-
+const { generateToken } = require("../utils/jwt");
+const { comparePassword, hashedPassword } = require("../utils/bcrypt");
+const { Unauthorized, Conflict } = require("../errors");
 
 const login = async (email, password, userCaptcha, sessionCaptcha) => {
-   if (!userCaptcha || userCaptcha.toLowerCase() !== sessionCaptcha?.toLowerCase()) {
-      throw new Unauthorized('Captcha tidak valid');
-   }
+  if (
+    !userCaptcha ||
+    userCaptcha.toLowerCase() !== sessionCaptcha?.toLowerCase()
+  ) {
+    throw new Unauthorized("Captcha tidak valid");
+  }
 
-   const user = await prisma.user.findUnique({
-      where: { email }
-   });
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
-   if (!user) {
-      throw new Unauthorized('Email atau Password salah')
-   }
+  if (!user || user.role !== "USER") {
+    throw new Unauthorized("Email atau Password salah");
+  }
 
-   const isMatch = await comparePassword(password, user.password)
+  const isMatch = await comparePassword(password, user.password);
 
-   if (!isMatch) throw new Unauthorized('Email atau Password salah')
+  if (!isMatch) throw new Unauthorized("Email atau Password salah");
 
-   const token = generateToken({ id: user.id, username: user.username, role: user.role })
+  const token = generateToken({
+    id: user.id,
+    username: user.username,
+    role: user.role,
+  });
 
-   return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
+  return {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
 };
 
 const loginAdminService = async (email, password) => {
-   const user = await prisma.user.findUnique({
-      where: { email }
-   });
+  const user = await prisma.user.findUnique({
+    where: { email },
+  });
 
-   if (!user) {
-      throw new Unauthorized('Email atau Password salah')
-   }
+  if (!user || (user.role !== "ADMIN" && user.role !== "PLN")) {
+    throw new Unauthorized("Tidak punya akses ke dashboard");
+  }
 
-   const isMatch = await comparePassword(password, user.password)
+  const isMatch = await comparePassword(password, user.password);
 
-   if (!isMatch) throw new Unauthorized('Email atau Password salah')
+  if (!isMatch) throw new Unauthorized("Email atau Password salah");
 
-   const token = generateToken({ id: user.id, username: user.email, role: user.role })
+  const token = generateToken({
+    id: user.id,
+    username: user.email,
+    role: user.role,
+  });
 
-   return { token, user: { id: user.id, username: user.username, email: user.email, role: user.role } }
-}
-
-
+  return {
+    token,
+    user: {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+    },
+  };
+};
 
 const register = async (username, email, password, role) => {
-   const checkEmail = await prisma.user.findUnique({ where: { email: email } })
+  const checkEmail = await prisma.user.findUnique({ where: { email: email } });
 
-   if (checkEmail) throw new Conflict('Email sudah terdaftar, harap pakai email lain ')
+  if (checkEmail)
+    throw new Conflict("Email sudah terdaftar, harap pakai email lain ");
 
-   const hashePassword = await hashedPassword(password)
+  const hashePassword = await hashedPassword(password);
 
-   const userRegister = await prisma.user.create({
-      data: {
-         username,
-         email,
-         password: hashePassword,
-         role
-      }
-   })
+  const userRegister = await prisma.user.create({
+    data: {
+      username,
+      email,
+      password: hashePassword,
+      role,
+    },
+  });
 
-   return userRegister
-}
+  return userRegister;
+};
 
 module.exports = {
-   login,
-   register,
-   loginAdminService
-}
+  login,
+  register,
+  loginAdminService,
+};

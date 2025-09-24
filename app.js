@@ -11,11 +11,11 @@ const path = require('path')
 
 const app = express()
 
-
 const allowedOrigins = [
    `${process.env.PORT_PWA}`,
-   `${process.env.PORT_WEB}`
-];
+   `${process.env.PORT_WEB}`,
+   `${process.env.PORT_INSTITUT}`
+]
 
 app.use(cors({
    origin: function (origin, callback) {
