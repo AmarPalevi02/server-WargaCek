@@ -41,23 +41,39 @@ const login = async (email, password, userCaptcha, sessionCaptcha) => {
   };
 };
 
+
 const loginAdminService = async (email, password) => {
   const user = await prisma.user.findUnique({
     where: { email },
+    include: { dinas: true }, 
   });
 
-  if (!user || (user.role !== "ADMIN" && user.role !== "PLN")) {
+  if (!user) throw new Unauthorized("Email atau Password salah");
+
+
+  const isMatch = await comparePassword(password, user.password);
+  if (!isMatch) throw new Unauthorized("Email atau Password salah");
+
+  // Validasi akses dashboard
+  if (user.role === "ADMIN") {
+    //Admin selalu boleh
+  } else if (
+    user.role === "DINAS" &&
+    user.dinas &&
+    ["PLN", "DAMKAR", "POLDA"].includes(user.dinas.name)
+  ) {
+    //USER dengan dinas tertentu boleh
+  } else {
     throw new Unauthorized("Tidak punya akses ke dashboard");
   }
 
-  const isMatch = await comparePassword(password, user.password);
-
-  if (!isMatch) throw new Unauthorized("Email atau Password salah");
-
+  // Buat token dengan informasi dinas
   const token = generateToken({
     id: user.id,
-    username: user.email,
+    username: user.username,
     role: user.role,
+    dinasId: user.dinasId,
+    dinasName: user.dinas?.name || null,
   });
 
   return {
@@ -67,6 +83,8 @@ const loginAdminService = async (email, password) => {
       username: user.username,
       email: user.email,
       role: user.role,
+      dinasId: user.dinasId,
+      dinasName: user.dinas?.name || null,
     },
   };
 };

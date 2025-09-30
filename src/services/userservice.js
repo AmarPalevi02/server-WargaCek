@@ -1,6 +1,6 @@
 const prisma = require("../config/prisma");
 const { NotFoudn } = require("../errors");
-const {DEFAULT_RADIUS} = require("../config/constans");
+const { DEFAULT_RADIUS } = require("../config/constans");
 
 const createLaporanService = async ({
   tipe_kerusakan,
@@ -33,13 +33,26 @@ const createLaporanService = async ({
         User: { connect: { id: userId } },
       },
     });
+
+    await prisma.laporanStatus.create({
+      data: {
+        laporanId: laporan.id,
+        dinasId: jenisKerusakan.dinasId,
+        status: "PENDING",
+      },
+    });
+
     return laporan;
   } catch (error) {
     throw new NotFoudn("Gagal membuat laporan: " + error.message);
   }
 };
 
-const getLaporanService = async ({ userLat, userLng, radius = DEFAULT_RADIUS }) => {
+const getLaporanService = async ({
+  userLat,
+  userLng,
+  radius = DEFAULT_RADIUS,
+}) => {
   try {
     let laporan;
 
@@ -102,6 +115,12 @@ const histroyUserService = async (userId) => {
       include: {
         jenisKerusakan: { select: { jenis_kerusakan: true } },
         User: { select: { username: true } },
+        statuses: {
+          include: {
+            Dinas: { select: { name: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+        },
       },
       orderBy: {
         waktu_laporan: "desc",
@@ -120,16 +139,28 @@ const deleteLaporanService = async (laporanId, userId) => {
         id: laporanId,
         userId: userId,
       },
+      include: {
+        votes: true,
+        statuses: true,
+      },
     });
 
     if (!laporan) {
-      throw new NotFoudn(
-        "Laporan tidak ditemukan atau Anda tidak memiliki akses"
-      );
+      throw new Error("Laporan tidak ditemukan atau Anda tidak memiliki akses");
     }
 
-    await prisma.laporan.delete({
-      where: { id: laporanId },
+    await prisma.$transaction(async (tx) => {
+      await tx.vote.deleteMany({
+        where: { laporanId: laporanId },
+      });
+
+      await tx.laporanStatus.deleteMany({
+        where: { laporanId: laporanId },
+      });
+
+      await tx.laporan.delete({
+        where: { id: laporanId },
+      });
     });
 
     return { message: "Laporan berhasil dihapus" };
@@ -210,10 +241,19 @@ const getLaporanWithVotesService = async ({
 
       const laporanIds = laporan.map((l) => l.id);
 
-      // Ambil semua votes
-      const votes = await prisma.vote.findMany({
-        where: { laporanId: { in: laporanIds } },
-      });
+      // Ambil semua votes dan statuses
+      const [votes, statuses] = await Promise.all([
+        prisma.vote.findMany({
+          where: { laporanId: { in: laporanIds } },
+        }),
+        prisma.laporanStatus.findMany({
+          where: { laporanId: { in: laporanIds } },
+          include: {
+            Dinas: { select: { name: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+        }),
+      ]);
 
       laporan = laporan.map((l) => {
         const voteForLaporan = votes.filter((v) => v.laporanId === l.id);
@@ -228,7 +268,20 @@ const getLaporanWithVotesService = async ({
         const userVote =
           voteForLaporan.find((v) => v.userId === userId)?.type || null;
 
-        return { ...l, likeCount, dislikeCount, userVote };
+        // Ambil status terbaru
+        const latestStatus = statuses
+          .filter((s) => s.laporanId === l.id)
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0];
+
+        return {
+          ...l,
+          likeCount,
+          dislikeCount,
+          userVote,
+          status: latestStatus?.status || "PENDING",
+          statusUpdatedAt: latestStatus?.updatedAt,
+          dinas: latestStatus?.Dinas?.name || null,
+        };
       });
     } else {
       laporan = await prisma.laporan.findMany({
@@ -236,6 +289,13 @@ const getLaporanWithVotesService = async ({
           jenisKerusakan: { select: { jenis_kerusakan: true } },
           User: { select: { username: true } },
           votes: true,
+          statuses: {
+            include: {
+              Dinas: { select: { name: true } },
+            },
+            orderBy: { updatedAt: "desc" },
+            take: 1,
+          },
         },
       });
 
@@ -245,12 +305,17 @@ const getLaporanWithVotesService = async ({
 
         const userVote = l.votes.find((v) => v.userId === userId)?.type || null;
 
+        const latestStatus = l.statuses[0];
+
         return {
           ...l,
           tipe_kerusakan: l.jenisKerusakan.jenis_kerusakan,
           likeCount,
           dislikeCount,
           userVote,
+          status: latestStatus?.status || "PENDING",
+          statusUpdatedAt: latestStatus?.updatedAt,
+          dinas: latestStatus?.Dinas?.name || null,
         };
       });
     }
@@ -265,7 +330,7 @@ const getLaporanWithVotesService = async ({
 
     return laporan;
   } catch (error) {
-    throw new NotFoudn("Gagal mengambil laporan dengan vote: " + error.message);
+    throw new Error("Gagal mengambil laporan dengan vote: " + error.message);
   }
 };
 

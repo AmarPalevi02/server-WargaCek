@@ -20,6 +20,9 @@ model User {
   password String
   role     Role   @default(USER)
 
+  dinasId   String?
+  dinas     Dinas?   @relation(fields: [dinasId], references: [id])
+
   laporan   Laporan[]
   votes     Vote[]
   createdAt DateTime  @default(now())
@@ -28,8 +31,37 @@ model User {
 enum Role {
   ADMIN
   USER
-  PLN
+  DINAS
 }
+
+model Dinas {
+  id     String  @id @default(uuid())
+  name   String  
+  users  User[]
+  laporan LaporanStatus[]
+  jenisKerusakan JenisKerusakan[]
+}
+
+model LaporanStatus {
+  id         String   @id @default(uuid())
+  laporanId  String
+  dinasId    String   
+  status     Status   @default(PENDING)
+  updatedAt  DateTime @updatedAt
+
+  Laporan Laporan @relation(fields: [laporanId], references: [id], onDelete: Cascade)
+  Dinas   Dinas   @relation(fields: [dinasId], references: [id])
+  
+}
+
+enum Status {
+  PENDING
+  VALIDATED
+  IN_PROGRESS
+  DONE
+}
+
+// untuk user ===============
 
 enum VoteType {
   LIKE
@@ -54,6 +86,9 @@ model JenisKerusakan {
   id              String    @id @default(uuid())
   jenis_kerusakan String
   laporan         Laporan[]
+
+  dinasId String?
+  dinas   Dinas? @relation(fields: [dinasId], references: [id])
 }
 
 model Laporan {
@@ -70,6 +105,7 @@ model Laporan {
   jenisKerusakan   JenisKerusakan @relation(fields: [jenisKerusakanId], references: [id])
 
   votes Vote[]
+  statuses LaporanStatus[]
 
   @@index([latitude, longitude], name: "idx_lat_lng")
 }

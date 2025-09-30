@@ -1,28 +1,42 @@
-const { Conflict } = require('../errors')
+const { Conflict } = require("../errors");
 
-const prisma = require('../config/prisma')
+const prisma = require("../config/prisma");
 
-const createJenisKejadianService = async (namaKerusakan) => {
-   const existing = await prisma.jenisKerusakan.findFirst({
-      where: { jenis_kerusakan: namaKerusakan },
-   })
+const createJenisKejadianService = async (namaKerusakan, dinasId) => {
+  const existing = await prisma.jenisKerusakan.findFirst({
+    where: { jenis_kerusakan: namaKerusakan },
+  });
 
-   if (existing) throw new Conflict('Jenis kerusakan sudah ada')
+  if (existing) throw new Conflict("Jenis kerusakan sudah ada");
 
-   return await prisma.jenisKerusakan.create({
-      data: {
-         jenis_kerusakan: namaKerusakan
-      }
-   })
-}
+  // pastikan dinasId valid
+  const dinas = await prisma.dinas.findUnique({ where: { id: dinasId } });
+  if (!dinas) throw new NotFound("Dinas tidak ditemukan");
+
+  return await prisma.jenisKerusakan.create({
+    data: {
+      jenis_kerusakan: namaKerusakan,
+      dinasId,
+    },
+  });
+};
 
 const getAllJenisKejadianService = async () => {
-   const datas = await prisma.jenisKerusakan.findMany()
+  const datas = await prisma.jenisKerusakan.findMany({
+    include: {
+      dinas: {
+        select: {
+          id: true,
+          name: true, // ambil name dinas
+        },
+      },
+    },
+  });
 
-   return datas
-}
+  return datas;
+};
 
 module.exports = {
-   createJenisKejadianService,
-   getAllJenisKejadianService
-}
+  createJenisKejadianService,
+  getAllJenisKejadianService,
+};
