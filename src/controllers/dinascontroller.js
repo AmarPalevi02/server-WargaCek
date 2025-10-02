@@ -6,17 +6,20 @@ const {
 const getLaporanPLNController = async (req, res) => {
   try {
     const { dinasName } = req.user;
+    // Ambil page dan limit dari query parameters
+    const { page = 1, limit = 10 } = req.query;
 
     if (!dinasName) {
       return res.status(400).json({ message: "User tidak terkait dinas" });
     }
 
-    const laporans = await getLaporanPLNServices(dinasName);
+    const result = await getLaporanPLNServices(dinasName, page, limit);
 
     res.status(200).json({
       status: "true",
       message: "Laporan berhasil diambil",
-      data: laporans,
+      data: result.data,
+      pagination: result.pagination,
     });
   } catch (error) {
     res.status(500).json({

@@ -27,7 +27,6 @@ route.get(
    getLaporanController
 );
 
-// debug
 route.get(
    '/laporan-vote',
    authenticateUser,
