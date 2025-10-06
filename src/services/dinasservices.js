@@ -80,6 +80,20 @@ const updateStatusLaporanServices = async ({ laporanId, dinasId, status }) => {
 
 // ================ DINSA POLDA =====================
 const getLaporanPoldaServices = async () => {
+  const pageNum = parseInt(page);
+  const limitNum = parseInt(limit);
+  const skip = (pageNum - 1) * limitNum;
+
+  // Hitung total data
+  const totalLaporans = await prisma.laporan.count({
+    where: {
+      jenisKerusakan: {
+        dinas: { name: dinasName },
+      },
+    },
+  });
+
+  // Ambil data dengan pagination
   const laporans = await prisma.laporan.findMany({
     where: {
       jenisKerusakan: {
@@ -96,12 +110,28 @@ const getLaporanPoldaServices = async () => {
       },
       statuses: {
         select: { status: true, updatedAt: true },
+        orderBy: { updatedAt: "desc" }, // Tambahkan orderBy untuk status
       },
     },
     orderBy: { waktu_laporan: "desc" },
+    skip: skip,
+    take: limitNum,
   });
 
-  return laporans;
+  // Hitung total pages
+  const totalPages = Math.ceil(totalLaporans / limitNum);
+
+  return {
+    data: laporans,
+    pagination: {
+      currentPage: pageNum,
+      totalPages: totalPages,
+      totalItems: totalLaporans,
+      itemsPerPage: limitNum,
+      hasNext: pageNum < totalPages,
+      hasPrev: pageNum > 1,
+    },
+  };
 };
 
 module.exports = {

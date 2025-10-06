@@ -6,6 +6,7 @@ const {
   getLaporanPoldaController,
   updateStatusLaporanController,
 } = require("../controllers/dinascontroller");
+const { getTotalUserController } = require("../controllers/admincontroller");
 
 const route = expres();
 
@@ -23,6 +24,13 @@ route.put(
   updateStatusLaporanController
 );
 
+route.get(
+  "/countuser",
+  authenticateUser,
+  authorizeRole(["PLN", "POLDA"]),
+  getTotalUserController
+);
+
 // ============ route POLDA ===================
 route.get(
   "/laporan/dinas/polda",
@@ -30,7 +38,5 @@ route.get(
   authorizeRole(["POLDA"]),
   getLaporanPoldaController
 );
-
-
 
 module.exports = route;

@@ -1,6 +1,7 @@
 const {
   createJenisKejadianService,
   getAllJenisKejadianService,
+  getTotalUserService,
 } = require("../services/adminservice");
 
 const createJenisKejadianController = async (req, res) => {
@@ -39,7 +40,27 @@ const getAllJenisKejadianController = async (req, res) => {
   }
 };
 
+const getTotalUserController = async (req, res) => {
+  try {
+    const dinasName = req.user?.dinasName;
+
+    const counts = await getTotalUserService(dinasName);
+
+    res.status(200).json({
+      status: "true",
+      message: "Berhasil memuat",
+      data: counts,
+    });
+  } catch (error) {
+    res.status(401).json({
+      status: "false",
+      message: error.message || "gagal membuat jenis kerusakan!",
+    });
+  }
+};
+
 module.exports = {
   createJenisKejadianController,
   getAllJenisKejadianController,
+  getTotalUserController,
 };

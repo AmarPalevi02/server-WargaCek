@@ -36,7 +36,29 @@ const getAllJenisKejadianService = async () => {
   return datas;
 };
 
+const getTotalUserService = async (dinasName) => {
+  const [countUser, countLaporan] = await Promise.all([
+    prisma.user.count({
+      where: { role: "USER" },
+    }),
+
+    prisma.laporan.count({
+      where: {
+        jenisKerusakan: {
+          dinas: { name: dinasName },
+        },
+      },
+    }),
+  ]);
+
+  return {
+    countUser,
+    countLaporan,
+  };
+};
+
 module.exports = {
   createJenisKejadianService,
   getAllJenisKejadianService,
+  getTotalUserService,
 };
