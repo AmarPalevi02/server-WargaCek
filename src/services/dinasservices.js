@@ -15,7 +15,7 @@ const getLaporanPLNServices = async (dinasName, page = 1, limit = 10) => {
     },
   });
 
-  // Ambil data dengan pagination
+  // Ambil data dengan aggregation untuk vote count
   const laporans = await prisma.laporan.findMany({
     where: {
       jenisKerusakan: {
@@ -23,7 +23,7 @@ const getLaporanPLNServices = async (dinasName, page = 1, limit = 10) => {
       },
     },
     include: {
-      User: { select: { id: true, username: true } },
+      User: { select: { id: true, username: true, no_telepon: true } },
       jenisKerusakan: {
         select: {
           jenis_kerusakan: true,
@@ -32,7 +32,15 @@ const getLaporanPLNServices = async (dinasName, page = 1, limit = 10) => {
       },
       statuses: {
         select: { status: true, updatedAt: true },
-        orderBy: { updatedAt: "desc" }, // Tambahkan orderBy untuk status
+        orderBy: { updatedAt: "desc" },
+      },
+      _count: {
+        // Menggunakan _count untuk menghitung votes
+        select: {
+          votes: {
+            where: { type: "LIKE" },
+          },
+        },
       },
     },
     orderBy: { waktu_laporan: "desc" },
@@ -40,11 +48,43 @@ const getLaporanPLNServices = async (dinasName, page = 1, limit = 10) => {
     take: limitNum,
   });
 
-  // Hitung total pages
+  // Untuk mendapatkan dislike count
+  const laporanIds = laporans.map((l) => l.id);
+
+  const voteCounts = await prisma.vote.groupBy({
+    by: ["laporanId", "type"],
+    where: {
+      laporanId: { in: laporanIds },
+    },
+    _count: {
+      _all: true,
+    },
+  });
+
+  // Format data dengan vote counts
+  const formattedLaporans = laporans.map((laporan) => {
+    const likeCount =
+      voteCounts.find((v) => v.laporanId === laporan.id && v.type === "LIKE")
+        ?._count?._all || 0;
+
+    const dislikeCount =
+      voteCounts.find((v) => v.laporanId === laporan.id && v.type === "DISLIKE")
+        ?._count?._all || 0;
+
+    return {
+      ...laporan,
+      voteCount: {
+        likes: likeCount,
+        dislikes: dislikeCount,
+        total: likeCount + dislikeCount,
+      },
+    };
+  });
+
   const totalPages = Math.ceil(totalLaporans / limitNum);
 
   return {
-    data: laporans,
+    data: formattedLaporans,
     pagination: {
       currentPage: pageNum,
       totalPages: totalPages,
@@ -93,7 +133,7 @@ const getLaporanPoldaServices = async () => {
     },
   });
 
-  // Ambil data dengan pagination
+  // Ambil data dengan aggregation untuk vote count
   const laporans = await prisma.laporan.findMany({
     where: {
       jenisKerusakan: {
@@ -110,7 +150,15 @@ const getLaporanPoldaServices = async () => {
       },
       statuses: {
         select: { status: true, updatedAt: true },
-        orderBy: { updatedAt: "desc" }, // Tambahkan orderBy untuk status
+        orderBy: { updatedAt: "desc" },
+      },
+      _count: {
+        // Menggunakan _count untuk menghitung votes
+        select: {
+          votes: {
+            where: { type: "LIKE" },
+          },
+        },
       },
     },
     orderBy: { waktu_laporan: "desc" },
@@ -118,11 +166,43 @@ const getLaporanPoldaServices = async () => {
     take: limitNum,
   });
 
-  // Hitung total pages
+  // Untuk mendapatkan dislike count
+  const laporanIds = laporans.map((l) => l.id);
+
+  const voteCounts = await prisma.vote.groupBy({
+    by: ["laporanId", "type"],
+    where: {
+      laporanId: { in: laporanIds },
+    },
+    _count: {
+      _all: true,
+    },
+  });
+
+  // Format data dengan vote counts
+  const formattedLaporans = laporans.map((laporan) => {
+    const likeCount =
+      voteCounts.find((v) => v.laporanId === laporan.id && v.type === "LIKE")
+        ?._count?._all || 0;
+
+    const dislikeCount =
+      voteCounts.find((v) => v.laporanId === laporan.id && v.type === "DISLIKE")
+        ?._count?._all || 0;
+
+    return {
+      ...laporan,
+      voteCount: {
+        likes: likeCount,
+        dislikes: dislikeCount,
+        total: likeCount + dislikeCount,
+      },
+    };
+  });
+
   const totalPages = Math.ceil(totalLaporans / limitNum);
 
   return {
-    data: laporans,
+    data: formattedLaporans,
     pagination: {
       currentPage: pageNum,
       totalPages: totalPages,

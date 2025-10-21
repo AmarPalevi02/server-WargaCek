@@ -49,10 +49,10 @@ const loginAdminController = async (req, res) => {
 }
 
 const registerController = async (req, res) => {
-   const { username, email, password, role } = req.body
+   const { username, email, no_telepon, password, role } = req.body
 
    try {
-      const result = await register(username, email, password, role)
+      const result = await register(username, email, no_telepon, password, role)
       res.status(201).json({
          status: "201",
          message: 'Success register',

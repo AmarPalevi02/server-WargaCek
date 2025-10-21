@@ -89,7 +89,7 @@ const loginAdminService = async (email, password) => {
   };
 };
 
-const register = async (username, email, password, role) => {
+const register = async (username, email, no_telepon, password, role) => {
   const checkEmail = await prisma.user.findUnique({ where: { email: email } });
 
   if (checkEmail)
@@ -101,6 +101,7 @@ const register = async (username, email, password, role) => {
     data: {
       username,
       email,
+      no_telepon,
       password: hashePassword,
       role,
     },
