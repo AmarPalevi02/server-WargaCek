@@ -171,7 +171,6 @@ const deleteLaporanService = async (laporanId, userId) => {
 
 const voteLaporanService = async (laporanId, userId, type) => {
   try {
-    // Pastikan laporan ada
     const laporan = await prisma.laporan.findUnique({
       where: { id: laporanId },
     });
@@ -320,11 +319,41 @@ const getLaporanWithVotesService = async ({
       });
     }
 
-    // Urutkan
+    // Fungsi untuk menghitung skor berdasarkan usia (1 MINGGU) dan vot
+    const calculateScore = (laporanItem) => {
+      const now = new Date();
+      const laporanTime = new Date(laporanItem.waktu_laporan);
+      const ageInMinutes = (now - laporanTime) / (1000 * 60 * 60);
+
+      // Vote score (like meningkatkan, dislike menurunkan)
+      const voteScore = laporanItem.likeCount - laporanItem.dislikeCount;
+
+      // Laporan baru (< 1 MINGGU = 168 jam) mendapatkan bonus
+      const isNew = ageInMinutes < 168;
+      const ageBonus = isNew ? 1000 : 0;
+      
+      // Laporan lama (> 1 MINGGU) mendapatkan penalty berdasarkan usia
+      const agePenalty = Math.max(0, (ageInMinutes - 168) * 0.5);
+
+      return voteScore + ageBonus - agePenalty;
+    };
+
+    // Urutkan berdasarkan skor yang dihitung
     laporan.sort((a, b) => {
-      if (a.likeCount !== b.likeCount) return b.likeCount - a.likeCount;
-      if (a.dislikeCount !== b.dislikeCount)
-        return a.dislikeCount - b.dislikeCount;
+      const scoreA = calculateScore(a);
+      const scoreB = calculateScore(b);
+
+      // Prioritas utama: skor tertinggi di atas
+      if (scoreA !== scoreB) {
+        return scoreB - scoreA;
+      }
+
+      // Jika skor sama, urutkan berdasarkan like count
+      if (a.likeCount !== b.likeCount) {
+        return b.likeCount - a.likeCount;
+      }
+
+      // Jika like count sama, urutkan berdasarkan waktu (terbaru di atas)
       return new Date(b.waktu_laporan) - new Date(a.waktu_laporan);
     });
 
