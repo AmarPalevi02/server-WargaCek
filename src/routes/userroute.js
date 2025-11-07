@@ -8,7 +8,10 @@ const {
    histroyUserController,
    deleteLaporanController,
    voteLaporanController,
-   getLaporanWithVotesController
+   getLaporanWithVotesController,
+   createKomentarController,
+   getLaporanDetailController,
+   deleteKomentarController
 } = require("../controllers/usercontroller")
 
 const route = expres()
@@ -53,5 +56,26 @@ route.post(
    authorizeRole(["USER"]),
    voteLaporanController
 )
+
+route.post(
+  '/laporan/:laporanId/komentar',
+  authenticateUser,
+  authorizeRole(["USER"]),
+  createKomentarController
+);
+
+
+route.get(
+  '/laporan/:laporanId',
+  authenticateUser,
+  getLaporanDetailController
+);
+
+route.delete(
+  '/komentar/:komentarId',
+  authenticateUser,
+  authorizeRole(["USER"]),
+  deleteKomentarController
+);
 
 module.exports = route

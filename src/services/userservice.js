@@ -1,5 +1,5 @@
 const prisma = require("../config/prisma");
-const { NotFoudn } = require("../errors");
+const { NotFoudn, Forbidden } = require("../errors");
 const { DEFAULT_RADIUS } = require("../config/constans");
 
 const createLaporanService = async ({
@@ -142,6 +142,7 @@ const deleteLaporanService = async (laporanId, userId) => {
       include: {
         votes: true,
         statuses: true,
+        komentar: true,
       },
     });
 
@@ -151,6 +152,10 @@ const deleteLaporanService = async (laporanId, userId) => {
 
     await prisma.$transaction(async (tx) => {
       await tx.vote.deleteMany({
+        where: { laporanId: laporanId },
+      });
+
+      await tx.komentar.deleteMany({
         where: { laporanId: laporanId },
       });
 
@@ -189,6 +194,67 @@ const voteLaporanService = async (laporanId, userId, type) => {
   } catch (error) {
     console.log(error.message);
     throw new NotFoudn("Gagal memberikan vote: " + error.message);
+  }
+};
+
+// create komentar
+const createKomentarService = async (laporanId, userId, konten) => {
+  try {
+    // Cek apakah laporan exists
+    const laporan = await prisma.laporan.findUnique({
+      where: { id: laporanId },
+    });
+
+    if (!laporan) {
+      throw new NotFoudn("Laporan tidak ditemukan");
+    }
+
+    const komentar = await prisma.komentar.create({
+      data: {
+        konten,
+        userId,
+        laporanId,
+      },
+      include: {
+        User: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
+      },
+    });
+
+    return komentar;
+  } catch (error) {
+    throw new Error("Gagal membuat komentar: " + error.message);
+  }
+};
+
+// delet komentar by user
+const deleteKomentarService = async (komentarId, userId) => {
+  try {
+    // Cek apakah komentar milik user
+    const komentar = await prisma.komentar.findFirst({
+      where: {
+        id: komentarId,
+        userId: userId,
+      },
+    });
+
+    if (!komentar) {
+      throw new Forbidden(
+        "Komentar tidak ditemukan atau Anda tidak memiliki akses"
+      );
+    }
+
+    await prisma.komentar.delete({
+      where: { id: komentarId },
+    });
+
+    return { message: "Komentar berhasil dihapus" };
+  } catch (error) {
+    throw new Error("Gagal menghapus komentar: " + error.message);
   }
 };
 
@@ -245,6 +311,7 @@ const getLaporanWithVotesService = async ({
         prisma.vote.findMany({
           where: { laporanId: { in: laporanIds } },
         }),
+
         prisma.laporanStatus.findMany({
           where: { laporanId: { in: laporanIds } },
           include: {
@@ -331,7 +398,7 @@ const getLaporanWithVotesService = async ({
       // Laporan baru (< 1 MINGGU = 168 jam) mendapatkan bonus
       const isNew = ageInMinutes < 168;
       const ageBonus = isNew ? 1000 : 0;
-      
+
       // Laporan lama (> 1 MINGGU) mendapatkan penalty berdasarkan usia
       const agePenalty = Math.max(0, (ageInMinutes - 168) * 0.5);
 
@@ -363,6 +430,71 @@ const getLaporanWithVotesService = async ({
   }
 };
 
+const getLaporanDetailService = async (laporanId, userId) => {
+  try {
+    const laporan = await prisma.laporan.findUnique({
+      where: { id: laporanId },
+      include: {
+        jenisKerusakan: { select: { jenis_kerusakan: true } },
+        User: { select: { username: true } },
+        votes: true,
+        komentar: {
+          include: {
+            User: {
+              select: {
+                id: true,
+                username: true,
+              },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        statuses: {
+          include: {
+            Dinas: { select: { name: true } },
+          },
+          orderBy: { updatedAt: "desc" },
+        },
+      },
+    });
+
+    if (!laporan) {
+      throw new Error("Laporan tidak ditemukan");
+    }
+
+    const likeCount = laporan.votes.filter((v) => v.type === "LIKE").length;
+    const dislikeCount = laporan.votes.filter(
+      (v) => v.type === "DISLIKE"
+    ).length;
+    const userVote =
+      laporan.votes.find((v) => v.userId === userId)?.type || null;
+    const latestStatus = laporan.statuses[0];
+
+    return {
+      id: laporan.id,
+      tipe_kerusakan: laporan.jenisKerusakan.jenis_kerusakan,
+      deskripsi: laporan.deskripsi,
+      location: laporan.location,
+      longitude: laporan.longitude,
+      latitude: laporan.latitude,
+      foto_url: laporan.foto_url,
+      waktu_laporan: laporan.waktu_laporan,
+      userId: laporan.userId,
+      username: laporan.User.username,
+      likeCount,
+      dislikeCount,
+      userVote,
+      komentarCount: laporan.komentar.length,
+      komentar: laporan.komentar,
+      status: latestStatus?.status || "PENDING",
+      statusUpdatedAt: latestStatus?.updatedAt,
+      dinas: latestStatus?.Dinas?.name || null,
+    };
+  } catch (error) {
+    throw new Error("Gagal mengambil detail laporan: " + error.message);
+  }
+};
+
 module.exports = {
   createLaporanService,
   getLaporanService,
@@ -370,4 +502,7 @@ module.exports = {
   deleteLaporanService,
   voteLaporanService,
   getLaporanWithVotesService,
+  createKomentarService,
+  deleteKomentarService,
+  getLaporanDetailService,
 };

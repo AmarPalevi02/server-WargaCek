@@ -26,6 +26,7 @@ model User {
 
   laporan   Laporan[]
   votes     Vote[]
+  komentar Komentar[]
   createdAt DateTime  @default(now())
 }
 
@@ -108,6 +109,20 @@ model Laporan {
 
   votes Vote[]
   statuses LaporanStatus[]
+  komentar Komentar[]
 
   @@index([latitude, longitude], name: "idx_lat_lng")
+}
+
+model Komentar {
+  id         String   @id @default(uuid())
+  konten     String
+  userId     String
+  laporanId  String
+  createdAt  DateTime @default(now())
+
+  User    User    @relation(fields: [userId], references: [id])
+  Laporan Laporan @relation(fields: [laporanId], references: [id], onDelete: Cascade)
+
+  @@index([laporanId])
 }

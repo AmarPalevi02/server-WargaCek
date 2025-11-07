@@ -5,6 +5,9 @@ const {
   deleteLaporanService,
   voteLaporanService,
   getLaporanWithVotesService,
+  createKomentarService,
+  getLaporanDetailService,
+  deleteKomentarService,
 } = require("../services/userservice");
 
 const { DEFAULT_RADIUS } = require("../config/constans");
@@ -135,6 +138,68 @@ const voteLaporanController = async (req, res) => {
   }
 };
 
+const createKomentarController = async (req, res) => {
+  try {
+    const { laporanId } = req.params;
+    const { konten } = req.body;
+    const userId = req.user?.id;
+
+    if (!laporanId || !konten || !userId) {
+      return res.status(400).json({
+        status: false,
+        error: "Data tidak lengkap",
+      });
+    }
+
+    const komentar = await createKomentarService(laporanId, userId, konten);
+
+    res.status(201).json({
+      status: true,
+      message: "Komentar berhasil ditambahkan",
+      data: komentar,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      error: error.message,
+    });
+  }
+};
+
+
+const deleteKomentarController = async (req, res) => {
+  try {
+    const { komentarId } = req.params;
+    const userId = req.user?.id;
+
+    if (!komentarId || !userId) {
+      return res.status(400).json({
+        status: false,
+        error: "komentarId dan userId diperlukan",
+      });
+    }
+
+    const result = await deleteKomentarService(komentarId, userId);
+
+    res.status(200).json({
+      status: true,
+      message: result.message,
+    });
+  } catch (error) {
+    if (error.message.includes("tidak memiliki akses")) {
+      return res.status(403).json({
+        status: false,
+        error: error.message,
+      });
+    }
+    
+    res.status(500).json({
+      status: false,
+      error: error.message,
+    });
+  }
+};
+
 const getLaporanWithVotesController = async (req, res) => {
   try {
     const { userLat, userLng, radius } = req.query;
@@ -160,6 +225,33 @@ const getLaporanWithVotesController = async (req, res) => {
   }
 };
 
+const getLaporanDetailController = async (req, res) => {
+  try {
+    const { laporanId } = req.params;
+    const userId = req.user?.id || null;
+
+    if (!laporanId) {
+      return res.status(400).json({
+        status: false,
+        error: "laporanId diperlukan",
+      });
+    }
+
+    const laporan = await getLaporanDetailService(laporanId, userId);
+
+    res.status(200).json({
+      status: true,
+      message: "Detail laporan berhasil diambil",
+      data: laporan,
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: false,
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   createLaporanController,
   getLaporanController,
@@ -167,4 +259,7 @@ module.exports = {
   deleteLaporanController,
   voteLaporanController,
   getLaporanWithVotesController,
+  createKomentarController,
+  getLaporanDetailController,
+  deleteKomentarController,
 };
