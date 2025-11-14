@@ -38,7 +38,7 @@ enum Role {
 
 model Dinas {
   id     String  @id @default(uuid())
-  name   String  
+  name   String  @unique  
   users  User[]
   laporan LaporanStatus[]
   jenisKerusakan JenisKerusakan[]
@@ -51,9 +51,14 @@ model LaporanStatus {
   status     Status   @default(PENDING)
   updatedAt  DateTime @updatedAt
 
+  transferredFrom String? // ID dinas sebelumnya (jika dialihkan)
+  transferReason  String? // Alasan pengalihan
+
   Laporan Laporan @relation(fields: [laporanId], references: [id], onDelete: Cascade)
   Dinas   Dinas   @relation(fields: [dinasId], references: [id])
   
+
+  @@unique([laporanId, dinasId])
 }
 
 enum Status {

@@ -54,10 +54,23 @@ const authRouters = require("./src/routes/authroute");
 const adminRoutes = require("./src/routes/adminroute");
 const userRoutes = require("./src/routes/userroute");
 const dinasRoutes = require("./src/routes/dinasroute");
+const authenticateUser = require("./src/middlewares/auth");
 
 app.get("/", (req, res) => {
   res.send("testing");
 });
+
+app.get("/check-token", authenticateUser, (req, res) => {
+  console.log("=== CHECK TOKEN ===");
+  console.log("req.user:", req.user);
+  
+  res.json({
+    success: true,
+    message: "Token valid",
+    userFromToken: req.user
+  });
+});
+
 
 // version
 const version = "/dev-wrgck-v1";

@@ -1,6 +1,6 @@
 const expres = require("express")
 const authenticateUser = require("../middlewares/auth")
-const authorizeRole = require("../middlewares/authorizeRole")
+const { authorizeRole }= require("../middlewares/authorizeRole")
 const uploadMidleware = require("../middlewares/mullter")
 const {
    createLaporanController,
@@ -27,6 +27,7 @@ route.post(
 route.get(
    '/laporan',
    authenticateUser,
+   authorizeRole(["USER"]),
    getLaporanController
 );
 

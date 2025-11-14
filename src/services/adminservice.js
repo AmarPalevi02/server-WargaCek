@@ -27,7 +27,7 @@ const getAllJenisKejadianService = async () => {
       dinas: {
         select: {
           id: true,
-          name: true, // ambil name dinas
+          name: true, 
         },
       },
     },
