@@ -65,7 +65,7 @@ const ROLE_PERMISSIONS = {
   },
 };
 
-// List dinas yang boleh akses dashboard
+
 const ALLOWED_DINAS_DASHBOARD = ["PLN", "POLDA", "DAMKAR", "PU"];
 
 module.exports = {

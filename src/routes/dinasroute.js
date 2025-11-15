@@ -23,7 +23,6 @@ route.get(
   authenticateUser,
   authorizeRole(["DINAS", "ADMIN"]),
   (req, res) => {
-    // Override showDone ke true
     req.query.showDone = "true";
     return getLaporanDinasController(req, res);
   }
